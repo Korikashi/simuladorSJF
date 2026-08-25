@@ -1,0 +1,12 @@
+# Carpetas de compilación y empaquetado
+build/
+build-win/
+BuildWin/
+AppDir/
+
+# Archivos ejecutables finales o paquetes generados en la raíz
+*.AppImage
+*.exe
+*.zip
+*.tar.gz
+*.ini
