@@ -66,4 +66,5 @@ endif()
 # Ocultar la consola de comandos en Windows
 if (WIN32)
     target_link_libraries(simulador_sjf PRIVATE -mwindows)
+    target_link_options(simulador_sjf PRIVATE -static-libgcc -static-libstdc++ -static -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive)
 endif()
