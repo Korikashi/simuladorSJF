@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 enum class ProcessState {
     NUEVO,
+    ESPERANDO_MEMORIA, // Llegó, pero no hay memoria libre suficiente para admitirlo
     LISTO,
     EJECUTANDO,
     BLOQUEADO,
@@ -36,8 +37,10 @@ struct Process {
     int ioRemaining = 0;   // Ticks de E/S restantes (en ejecución)
     bool ioTriggered = false;
 
-    // Recurso simulado: memoria RAM requerida (solo informativo/reportado)
+    // Recurso simulado: memoria RAM requerida. Se compara contra la memoria
+    // libre del sistema para decidir la admisión (ver Simulation::step).
     int memoryRequired = 0;
+    bool everWaitedForMemory = false; // true si en algún tick estuvo ESPERANDO_MEMORIA
 
     // Estado dinámico
     ProcessState state = ProcessState::NUEVO;

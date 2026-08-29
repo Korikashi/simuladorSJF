@@ -2,7 +2,29 @@
 build/
 build-win/
 BuildWin/
+out/
 AppDir/
+
+# Archivos generados por CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+Makefile
+build.ninja
+.ninja_deps
+.ninja_log
+
+# Artefactos de compilacion
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.pdb
+*.ilk
+*.d
 
 # Archivos ejecutables finales o paquetes generados en la raíz
 *.AppImage
@@ -10,3 +32,13 @@ AppDir/
 *.zip
 *.tar.gz
 *.ini
+
+# Archivos temporales del sistema y del editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.log
+.vs/
+
