@@ -15,6 +15,7 @@ Makefile
 build.ninja
 .ninja_deps
 .ninja_log
+windows-toolchain.cmake
 
 # Artefactos de compilacion
 *.o

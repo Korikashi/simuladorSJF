@@ -2,6 +2,8 @@
 #include "imgui.h"
 #include "tinyfiledialogs.h"
 #include <cstdio>
+#include <filesystem>
+#include <string>
 
 namespace {
 
@@ -15,6 +17,15 @@ ImVec4 colorForState(ProcessState s) {
         case ProcessState::FINALIZADO:         return ImVec4(0.25f, 0.45f, 0.85f, 1.0f); // azul
     }
     return ImVec4(1, 1, 1, 1);
+}
+
+std::string valueOrDash(int value, bool hasValue) {
+    return hasValue ? std::to_string(value) : std::string("-");
+}
+
+std::string fallbackExportPath() {
+    std::filesystem::path exportDir = std::filesystem::current_path();
+    return (exportDir / "informe_simulacion.html").string();
 }
 
 } // namespace
@@ -205,10 +216,10 @@ void Gui::drawReportPanel() {
             ImGui::TableSetColumnIndex(2); ImGui::Text("%d", p.arrivalTime);
             ImGui::TableSetColumnIndex(3); ImGui::Text("%d", p.burstTime);
             ImGui::TableSetColumnIndex(4); ImGui::Text("%d", p.memoryRequired);
-            ImGui::TableSetColumnIndex(5); ImGui::Text("%s", p.startTime >= 0 ? std::to_string(p.startTime).c_str() : "-");
-            ImGui::TableSetColumnIndex(6); ImGui::Text("%s", p.finishTime >= 0 ? std::to_string(p.finishTime).c_str() : "-");
-            ImGui::TableSetColumnIndex(7); ImGui::Text("%s", p.state == ProcessState::FINALIZADO ? std::to_string(p.waitingTime()).c_str() : "-");
-            ImGui::TableSetColumnIndex(8); ImGui::Text("%s", p.startTime >= 0 ? std::to_string(p.responseTime()).c_str() : "-");
+            ImGui::TableSetColumnIndex(5); ImGui::Text("%s", valueOrDash(p.startTime, p.startTime >= 0).c_str());
+            ImGui::TableSetColumnIndex(6); ImGui::Text("%s", valueOrDash(p.finishTime, p.finishTime >= 0).c_str());
+            ImGui::TableSetColumnIndex(7); ImGui::Text("%s", valueOrDash(p.waitingTime(), p.state == ProcessState::FINALIZADO).c_str());
+            ImGui::TableSetColumnIndex(8); ImGui::Text("%s", valueOrDash(p.responseTime(), p.startTime >= 0).c_str());
         }
         ImGui::EndTable();
     }
@@ -222,19 +233,35 @@ void Gui::drawReportPanel() {
 
     ImGui::Separator();
     if (ImGui::Button("Exportar informe...")) {
-        const char* filterPatterns[1] = { "*.html" };
-        const char* savePath = tinyfd_saveFileDialog(
+        std::string savePath = fallbackExportPath();
+
+#if defined(_WIN32)
+        const char* filterPatterns[] = { "*.html" };
+        const char* requestedPath = tinyfd_saveFileDialog(
             "Guardar informe de simulacion",
-            "informe_simulacion.html",
+            savePath.c_str(),
             1, filterPatterns,
             "Paginas HTML");
-        if (savePath != nullptr) {
-            bool ok = sim_.exportReportHtml(savePath);
-            exportStatus_ = ok ? (std::string("Guardado: ") + savePath)
-                                : "No se pudo escribir el archivo.";
-        } else {
+
+        if (requestedPath == nullptr || requestedPath[0] == '\0') {
             exportStatus_ = "Exportacion cancelada.";
+            return;
         }
+        savePath = requestedPath;
+#endif
+
+        // En Linux/macOS, el selector nativo de tinyfiledialogs puede fallar o
+        // bloquear la aplicación en entornos GUI no nativos; por eso se usa una
+        // ruta segura por defecto para evitar el crash.
+        std::filesystem::path outputPath(savePath);
+        if (outputPath.has_parent_path()) {
+            std::error_code ec;
+            std::filesystem::create_directories(outputPath.parent_path(), ec);
+        }
+
+        bool ok = sim_.exportReportHtml(savePath);
+        exportStatus_ = ok ? (std::string("Guardado: ") + savePath)
+                            : "No se pudo escribir el archivo.";
     }
     if (!exportStatus_.empty()) {
         ImGui::SameLine();
