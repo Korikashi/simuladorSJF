@@ -55,6 +55,20 @@ public:
     double averageWaitingTime() const;
     double averageResponseTime() const;
     double cpuUtilizationPercent() const;
+    int getUsedMemoryKB() const { return usedMemoryKB_; }
+    int getMaxMemoryUsedKB() const { return maxMemoryUsedKB_; }
+
+    // --- Interpretación e informes --------------------------------------
+    // Genera un texto en lenguaje natural interpretando los resultados
+    // actuales de la simulación (se usa tanto en la GUI como en el export).
+    std::string buildInterpretationText() const;
+    // Escribe un informe .txt con configuración, tabla de resultados,
+    // métricas globales e interpretación. Devuelve true si pudo escribir.
+    bool exportReport(const std::string& path) const;
+    // Version HTML del mismo informe: tabla real con estilos, mas facil de
+    // leer y de convertir a PDF (abrir en el navegador -> Ctrl+P -> Guardar
+    // como PDF). Devuelve true si pudo escribir.
+    bool exportReportHtml(const std::string& path) const;
 
 private:
     std::vector<Process> processes_;
@@ -66,6 +80,9 @@ private:
     int runningId_ = -1; // id del proceso actualmente en CPU, -1 si ninguno
     float accumulator_ = 0.0f;
     int nextId_ = 1;
+    int usedMemoryKB_ = 0;    // Memoria actualmente ocupada por procesos admitidos
+    int maxMemoryUsedKB_ = 0; // Pico histórico de memoria ocupada
 
     Process* findById(int id);
+    void updateMemoryAdmission(); // NUEVO/ESPERANDO_MEMORIA -> LISTO según memoria libre
 };

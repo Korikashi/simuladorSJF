@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(SimuladorSJF CXX)
+project(SimuladorSJF C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,6 +26,20 @@ FetchContent_Declare(
     GIT_TAG        v1.90.9
 )
 FetchContent_MakeAvailable(imgui)
+
+FetchContent_Declare(
+    tinyfiledialogs
+    GIT_REPOSITORY https://github.com/native-toolkit/tinyfiledialogs.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(tinyfiledialogs)
+
+add_library(tinyfiledialogs STATIC
+    ${tinyfiledialogs_SOURCE_DIR}/tinyfiledialogs.c
+)
+target_include_directories(tinyfiledialogs PUBLIC
+    ${tinyfiledialogs_SOURCE_DIR}
+)
 
 add_library(imgui STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
@@ -57,7 +71,7 @@ set(SOURCES
 
 add_executable(simulador_sjf ${SOURCES})
 target_include_directories(simulador_sjf PRIVATE src)
-target_link_libraries(simulador_sjf PRIVATE imgui OpenGL::GL)
+target_link_libraries(simulador_sjf PRIVATE imgui tinyfiledialogs OpenGL::GL)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(simulador_sjf PRIVATE pthread dl)

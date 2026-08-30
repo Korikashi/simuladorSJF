@@ -1,16 +1,18 @@
 #include "Gui.hpp"
 #include "imgui.h"
+#include "tinyfiledialogs.h"
 #include <cstdio>
 
 namespace {
 
 ImVec4 colorForState(ProcessState s) {
     switch (s) {
-        case ProcessState::NUEVO:      return ImVec4(0.55f, 0.55f, 0.55f, 1.0f); // gris
-        case ProcessState::LISTO:      return ImVec4(0.90f, 0.80f, 0.20f, 1.0f); // amarillo
-        case ProcessState::EJECUTANDO: return ImVec4(0.20f, 0.75f, 0.30f, 1.0f); // verde
-        case ProcessState::BLOQUEADO:  return ImVec4(0.85f, 0.30f, 0.20f, 1.0f); // rojo/naranja
-        case ProcessState::FINALIZADO: return ImVec4(0.25f, 0.45f, 0.85f, 1.0f); // azul
+        case ProcessState::NUEVO:              return ImVec4(0.55f, 0.55f, 0.55f, 1.0f); // gris
+        case ProcessState::ESPERANDO_MEMORIA:  return ImVec4(0.60f, 0.35f, 0.75f, 1.0f); // morado
+        case ProcessState::LISTO:              return ImVec4(0.90f, 0.80f, 0.20f, 1.0f); // amarillo
+        case ProcessState::EJECUTANDO:         return ImVec4(0.20f, 0.75f, 0.30f, 1.0f); // verde
+        case ProcessState::BLOQUEADO:          return ImVec4(0.85f, 0.30f, 0.20f, 1.0f); // rojo/naranja
+        case ProcessState::FINALIZADO:         return ImVec4(0.25f, 0.45f, 0.85f, 1.0f); // azul
     }
     return ImVec4(1, 1, 1, 1);
 }
@@ -25,6 +27,7 @@ void Gui::render() {
     drawGanttPanel();
     drawMetricsPanel();
     drawReportPanel();
+    drawInterpretationPanel();
 }
 
 void Gui::drawSystemInfoPanel() {
@@ -35,6 +38,13 @@ void Gui::drawSystemInfoPanel() {
     ImGui::Text("Recursos simulados:");
     ImGui::BulletText("1 CPU");
     ImGui::SliderInt("Memoria RAM total (KB)", &sim_.config().totalMemoryKB, 128, 8192);
+    ImGui::Text("Memoria en uso: %d / %d KB (pico historico: %d KB)",
+                sim_.getUsedMemoryKB(), sim_.config().totalMemoryKB, sim_.getMaxMemoryUsedKB());
+    ImGui::ProgressBar(
+        sim_.config().totalMemoryKB > 0
+            ? (float)sim_.getUsedMemoryKB() / (float)sim_.config().totalMemoryKB
+            : 0.0f,
+        ImVec2(-1, 0));
     ImGui::BulletText("Dispositivos de E/S: %d", sim_.config().ioDevices);
     ImGui::End();
 }
@@ -102,6 +112,8 @@ void Gui::drawControlPanel() {
 void Gui::drawGanttPanel() {
     ImGui::Begin("Diagrama de Gantt / Estado en tiempo real");
 
+    ImGui::TextColored(colorForState(ProcessState::ESPERANDO_MEMORIA), "Esperando memoria");
+    ImGui::SameLine();
     ImGui::TextColored(colorForState(ProcessState::LISTO), "Listo");
     ImGui::SameLine();
     ImGui::TextColored(colorForState(ProcessState::EJECUTANDO), "Ejecutando");
@@ -137,6 +149,10 @@ void Gui::drawGanttPanel() {
         draw->AddText(ImVec2(origin.x, y + 4), IM_COL32(230, 230, 230, 255), label);
 
         for (size_t t = 0; t < history.size(); ++t) {
+            // Red de seguridad: si por algun motivo el snapshot de este tick
+            // tiene menos procesos de los que hay ahora, no dibujamos esa
+            // celda en vez de leer fuera de rango.
+            if (row >= history[t].states.size()) continue;
             ProcessState st = history[t].states[row];
             ImVec4 c = colorForState(st);
             ImVec2 p0(origin.x + labelW + t * cellW, y);
@@ -204,5 +220,32 @@ void Gui::drawReportPanel() {
                     sim_.averageWaitingTime(), sim_.averageResponseTime(), sim_.cpuUtilizationPercent());
     }
 
+    ImGui::Separator();
+    if (ImGui::Button("Exportar informe...")) {
+        const char* filterPatterns[1] = { "*.html" };
+        const char* savePath = tinyfd_saveFileDialog(
+            "Guardar informe de simulacion",
+            "informe_simulacion.html",
+            1, filterPatterns,
+            "Paginas HTML");
+        if (savePath != nullptr) {
+            bool ok = sim_.exportReportHtml(savePath);
+            exportStatus_ = ok ? (std::string("Guardado: ") + savePath)
+                                : "No se pudo escribir el archivo.";
+        } else {
+            exportStatus_ = "Exportacion cancelada.";
+        }
+    }
+    if (!exportStatus_.empty()) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("%s", exportStatus_.c_str());
+    }
+
+    ImGui::End();
+}
+
+void Gui::drawInterpretationPanel() {
+    ImGui::Begin("Interpretacion de Resultados");
+    ImGui::TextWrapped("%s", sim_.buildInterpretationText().c_str());
     ImGui::End();
 }

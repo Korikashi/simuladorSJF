@@ -2,11 +2,12 @@
 
 const char* stateToString(ProcessState s) {
     switch (s) {
-        case ProcessState::NUEVO:      return "Nuevo";
-        case ProcessState::LISTO:      return "Listo";
-        case ProcessState::EJECUTANDO: return "Ejecutando";
-        case ProcessState::BLOQUEADO:  return "Bloqueado";
-        case ProcessState::FINALIZADO: return "Finalizado";
+        case ProcessState::NUEVO:              return "Nuevo";
+        case ProcessState::ESPERANDO_MEMORIA:  return "Esperando memoria";
+        case ProcessState::LISTO:              return "Listo";
+        case ProcessState::EJECUTANDO:         return "Ejecutando";
+        case ProcessState::BLOQUEADO:          return "Bloqueado";
+        case ProcessState::FINALIZADO:         return "Finalizado";
     }
     return "?";
 }
@@ -18,6 +19,7 @@ void Process::resetRuntimeState() {
     ioTriggered = false;
     startTime = -1;
     finishTime = -1;
+    everWaitedForMemory = false;
 }
 
 int Process::waitingTime() const {

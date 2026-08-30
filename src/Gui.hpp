@@ -1,5 +1,6 @@
 #pragma once
 #include "Simulation.hpp"
+#include <string>
 
 // ---------------------------------------------------------------------------
 // Encapsula toda la interfaz Dear ImGui. Se le pasa una referencia a la
@@ -29,9 +30,12 @@ private:
     int randMaxBurst_ = 10;
     bool randAllowIO_ = true;
 
+    std::string exportStatus_;
+
     void drawSystemInfoPanel();
     void drawControlPanel();
     void drawGanttPanel();
     void drawReportPanel();
     void drawMetricsPanel();
+    void drawInterpretationPanel();
 };
