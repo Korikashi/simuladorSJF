@@ -3,6 +3,9 @@
 Simulación de un planificador de procesos para un sistema operativo
 **Monousuario / Multitarea**, con interfaz gráfica en **Dear ImGui**.
 
+## Vídeo de Simulación  
+[![▶️ Ver video en YouTube](https://img.shields.io/badge/_Ver_video_en_YouTube-FF0000?style=for-the-badge\&logo=youtube\&logoColor=white)](https://youtu.be/ew-jsleNsX4)
+
 ## 1. Descripción del sistema simulado
 
 | Parámetro                  | Valor                                                       |
